@@ -5,33 +5,20 @@ from fastapi.responses import JSONResponse
 from openai import AsyncOpenAI
 
 TOKEN = os.getenv('TOKEN')
-TOKEN_DEEP_SEEK = os.getenv('TOKEN_DEEP_SEEK')
+
 
 if not TOKEN:
     raise ValueError("Bot token is not set in environment variables!")
 
 app = FastAPI()
 
-client = AsyncOpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=TOKEN_DEEP_SEEK,
-)
+
 
 MAX_MESSAGE_LENGTH = 4096 
 
 def split_text(text, max_length=MAX_MESSAGE_LENGTH):
     return [text[i:i + max_length] for i in range(0, len(text), max_length)]
 
-async def generate_response(text: str):
-    try:
-        completion = await client.chat.completions.create(
-            model="deepseek/deepseek-r1-0528:free",
-            messages=[{"role": "user", "content": text}],
-        )
-        return completion.choices[0].message.content
-    except Exception as e:
-        print("Ошибка при генерации ответа:", e)
-        return "Произошла ошибка при обработке вашего запроса."
 
 def parse_message(message):
     if "message" not in message or "text" not in message["message"]:
@@ -66,7 +53,6 @@ async def tel_send_message(chat_id, text):
             "inline_keyboard": [
                 [
                     {"text": "Открыть Муз Чат", "web_app": {"url": "https://clearres2.github.io/bababab/"}},
-                    {"text": "Диалог с ИИ", "callback_data": "deepSeek"}
                 ]
             ]
         }
@@ -95,12 +81,7 @@ async def tel_send_message_not_markup(chat_id, text):
 
 user_states = {}
 
-async def process_user_request(chat_id, txt):
-    await tel_send_message_not_markup(chat_id, '🏈 Идет обработка...')
-    response_text = await generate_response(txt)
-    for part in split_text(response_text):
-        await tel_send_message_not_markup(chat_id, part)
-    user_states[chat_id] = None 
+
 
 @app.post('/webhook')
 async def webhook(request: Request, background_tasks: BackgroundTasks):
@@ -112,10 +93,6 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
         chat_id = callback["message"]["chat"]["id"]
         callback_data = callback["data"]
 
-        if callback_data == "deepSeek":
-            await tel_send_message_not_markup(chat_id, "Вы выбрали диалог с ИИ. Как я могу помочь вам?")
-            user_states[chat_id] = 'awaiting_response'
-            return JSONResponse(content={"status": "message_sent"}, status_code=200)
 
         return JSONResponse(content={"status": "deleted"}, status_code=200)
 
