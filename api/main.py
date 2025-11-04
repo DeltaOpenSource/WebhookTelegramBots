@@ -12,10 +12,6 @@ if not TOKEN:
 
 app = FastAPI()
 
-
-
-MAX_MESSAGE_LENGTH = 4096 
-
 def parse_message(message):
     if "message" not in message or "text" not in message["message"]:
         return None, None  
