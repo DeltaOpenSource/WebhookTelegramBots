@@ -16,10 +16,6 @@ app = FastAPI()
 
 MAX_MESSAGE_LENGTH = 4096 
 
-def split_text(text, max_length=MAX_MESSAGE_LENGTH):
-    return [text[i:i + max_length] for i in range(0, len(text), max_length)]
-
-
 def parse_message(message):
     if "message" not in message or "text" not in message["message"]:
         return None, None  
